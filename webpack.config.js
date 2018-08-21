@@ -1,34 +1,41 @@
-const path = require('path');
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const NpmInstallPlugin = require("npm-install-webpack-plugin");
-const parts = require("./webpack.parts");
 
-
-const commonConfig = merge([
-    {
-        plugins: [
-            new HtmlWebpackPlugin({
-                title: "Webpack demo",
-            })
-        ],
+module.exports = {
+    mode: "development",
+    entry: "./src/index.ts",
+    output: {
+        filename: "bundle.js"
     },
-]);
-
-const productionConfig = merge([]);
-
-const developmentConfig = merge([
-    parts.devServer({
-        // Customize host/port here if needed
+    resolve: {
+        // Add `.ts` and `.tsx` as a resolvable extension.
+        extensions: [".ts", ".tsx", ".js"]
+    },
+    module: {
+        rules: [
+            {
+                test: /\.css$/,
+                use: ["style-loader", "css-loader"],
+            },
+            {
+                test: /\.less$/,
+                use: ["style-loader", "css-loader", "less-loader"],
+            },
+            {
+                test: /\.tsx?$/,
+                loader: "ts-loader"
+            }
+        ]
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            title: "Webpack demo",
+        })
+    ],
+    devServer: {
+        overlay: true, // capturing compilation related warnings and errors and show them instead of showing my actual website.
+        stats: "errors-only",
         host: process.env.HOST,
         port: process.env.PORT,
-    }),
-]);
-
-module.exports = mode => {
-    if (mode === "production") {
-        return merge(commonConfig, productionConfig, {mode});
-    }
-
-    return merge(commonConfig, developmentConfig, {mode});
+        open: true, // Open the page in browser
+    },
 };
