@@ -1,4 +1,4 @@
-export default (text = "Hello world1234567") => {
+export default (text = "Hello123") => {
     const element = document.createElement("div");
 
     element.innerHTML = text;
