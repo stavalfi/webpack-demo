@@ -22,7 +22,40 @@ module.exports = {
             },
             {
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: "ts-loader",
+                exclude: [
+                    "node_modules",
+                    "webpack.config.js",
+                    "dist"
+                ]
+            },
+            {
+                test: /\.ts$/,
+                enforce: 'pre',
+                use: [
+                    {
+                        loader: 'tslint-loader',
+                        options: {
+                            // tslint errors are displayed by default as warnings
+                            // set emitErrors to true to display them as errors
+                            emitErrors: true,
+                            // tslint does not interrupt the compilation by default
+                            // if you want any file with tslint errors to fail
+                            // set failOnHint to true
+                            failOnHint: true,
+                            // enables type checked rules like 'for-in-array'
+                            // uses tsconfig.json from current working directory
+                            typeCheck: true,
+                            // automatically fix linting errors
+                            fix: true,
+                        }
+                    }
+                ],
+                exclude: [
+                    "node_modules",
+                    "webpack.config.js",
+                    "dist"
+                ]
             }
         ]
     },
