@@ -5,5 +5,3 @@ export default (text = "1") => {
 
     return element;
 };
-
-let x;
