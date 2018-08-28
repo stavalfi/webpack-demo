@@ -7,6 +7,7 @@ const GitRevisionPlugin = require("git-revision-webpack-plugin");
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const cssnano = require("cssnano");
 const safeParser = require('postcss-safe-parser');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
     devtool: "source-map",
@@ -91,7 +92,8 @@ module.exports = {
                 parser: safeParser
             },
             canPrint: false
-        })
+        }),
+        new BundleAnalyzerPlugin()
     ],
     // the dev server doesn't save any files in FS. he use in-memory FS because it is faster. so I won't find any actual bundled files in my actual FS.
     devServer: {
