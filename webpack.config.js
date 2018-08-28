@@ -1,16 +1,12 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
+    devtool: "source-map",
     mode: process.env.NODE_ENV === 'development' ? "development" : "production",
     entry: "./src/index.js",
     output: {
         // default output directory: "dist" under the main folder.
         filename: "bundle.js"
-    },
-    resolve: {
-        // Add `.ts` and `.tsx` as a resolvable extension.
-        extensions: [".ts", ".tsx", ".js"]
     },
     module: {
         rules: [
