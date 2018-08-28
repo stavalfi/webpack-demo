@@ -1,3 +1,6 @@
+import "react";
+import "react-dom";
+
 Promise.resolve().finally();
 
 class MySpecialClass {

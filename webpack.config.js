@@ -1,9 +1,19 @@
+const path = require('path');
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CleanWebpackPlugin = require("clean-webpack-plugin");
+const GitRevisionPlugin = require("git-revision-webpack-plugin");
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const cssnano = require("cssnano");
+const safeParser = require('postcss-safe-parser');
 
 module.exports = {
     devtool: "source-map",
+    // in production mode, the webpack does uglify and Scope Hoisting which means that all the modules are under
+    // the same scope and not in different scopes. it's slow down the build but makes the code run faster.
     mode: process.env.NODE_ENV === 'development' ? "development" : "production",
-    entry: "./src/index.js",
+    entry: path.join(__dirname, "src", "index.js"),
     output: {
         // default output directory: "dist" under the main folder.
         filename: "bundle.js"
@@ -62,6 +72,25 @@ module.exports = {
         new MiniCssExtractPlugin({
             // [name] will be the name of the entry file which defined in the webpack.config.js
             filename: "[name].css",
+        }),
+        // remove the dist folder before every webpack build.
+        new CleanWebpackPlugin([path.join(__dirname, "dist")]),
+        // add banner in the start of every output file of webpack: the git revision number (git commit number)
+        new webpack.BannerPlugin({
+            banner: new GitRevisionPlugin().version()
+        }),
+        // minimize (uglify) the css files after webpack finished to bundle it.
+        new OptimizeCSSAssetsPlugin({
+            cssProcessor: cssnano,
+            cssProcessorOptions: {
+                discardComments: {
+                    removeAll: true,
+                },
+                // Run cssnano in safe mode to avoid
+                // potentially unsafe transformations.
+                parser: safeParser
+            },
+            canPrint: false
         })
     ],
     // the dev server doesn't save any files in FS. he use in-memory FS because it is faster. so I won't find any actual bundled files in my actual FS.
@@ -72,4 +101,16 @@ module.exports = {
         port: process.env.PORT,
         open: true, // Open the page in browser
     },
+    // control the bundle size.
+    // it minimize using UglifyWebpackPlugin plugin by default.
+    optimization: {
+        // by default if we don't specify anything, the source code of every lib I'm importing in my JS code, will be added to the final bundle file.
+        // the advantage is less calls to other files when the browser runs the code but the disadvantage is that the file is too big to cache it.
+        // the solution is to split my code from the libs code I'm using. the advantage is that my code can be cached and the disadvantage that
+        // I Will have a lot of calls to other files which contain the libs code. The libs must be in node_modules.
+        // //  In production mode, there is a split by default.
+        splitChunks: {
+            chunks: "initial"
+        }
+    }
 };
