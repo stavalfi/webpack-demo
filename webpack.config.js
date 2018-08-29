@@ -10,14 +10,23 @@ const safeParser = require('postcss-safe-parser');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
-    devtool: "source-map",
+    //devtool: "source-map",
     // in production mode, the webpack does uglify and Scope Hoisting which means that all the modules are under
     // the same scope and not in different scopes. it's slow down the build but makes the code run faster.
     mode: process.env.NODE_ENV === 'development' ? "development" : "production",
     entry: path.join(__dirname, "src", "index.js"),
     output: {
         // default output directory: "dist" under the main folder.
-        filename: "bundle.js"
+        // the amount of output files depends on the webpack configurations.
+        // first of all, webpack will produce a file which contain modules for each of the entry files listed above.
+        // if you use spiting, then those files will be slitted according the strategy under "optimisation".
+        // each final output file is called chunk.
+        // all the output files are called bundles and chunks and also bundles contain one or more chunks.
+        // ....................................................................
+        // [name] == the name of the bundle that will be created. dependes if I use optimizations + there will be a cundle for each entry I list in webpack config file.
+        // [chunkhash] == a hash code that is generated from the content of the chunk
+        filename: "[name].[chunkhash].bundle.js",
+        path: path.join(__dirname, "src", "dist.js")
     },
     module: {
         rules: [
@@ -93,7 +102,10 @@ module.exports = {
             },
             canPrint: false
         }),
-        new BundleAnalyzerPlugin()
+        // generate a visualize analyzer of the output bundles using a server.
+        new BundleAnalyzerPlugin({
+            analyzerPort: 8887
+        })
     ],
     // the dev server doesn't save any files in FS. he use in-memory FS because it is faster. so I won't find any actual bundled files in my actual FS.
     devServer: {
@@ -112,6 +124,12 @@ module.exports = {
         // I Will have a lot of calls to other files which contain the libs code. The libs must be in node_modules.
         // //  In production mode, there is a split by default.
         splitChunks: {
+            // by default, webpack 4 only split the bundel to 2 chunks: vendor (my dependencies from node_modules) and my actual source of of my app
+            // only for vendors that I requeire by async. because this is not supported in JS spec yet then I will activate this optimization to the
+            // modules I require sync. which is all the modules.
+            // initial refer to the vendors I require from the entry files listed in webpack config file not async (sync).
+            // all == async + sync
+            // async == only async.
             chunks: "initial"
         }
     }
