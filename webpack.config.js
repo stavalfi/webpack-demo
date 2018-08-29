@@ -8,8 +8,10 @@ const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 const cssnano = require("cssnano");
 const safeParser = require('postcss-safe-parser');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const Jarvis = require("webpack-jarvis");
 
 const isDevelopmentMode = process.env.NODE_ENV === 'development';
+
 module.exports = {
     //devtool: "source-map",
     // in production mode, the webpack does uglify and Scope Hoisting which means that all the modules are under
@@ -26,7 +28,7 @@ module.exports = {
         // ....................................................................
         // [name] == the name of the chunk
         // [chunkhash] == a hash code that is generated from the content (without metadata of webpack) of the chunk.
-        filename: "[chunkhash].bundle.js",
+        filename: "[contenthash].bundle.js",
         path: path.join(__dirname, "dist")
     },
     module: {
@@ -41,9 +43,9 @@ module.exports = {
                     loader: "url-loader",
                     options: {
                         // it is for preventing the js bundle file to be too big and then the browser will need much time to load it.
-                        limit: 25000,
-                    },
-                },
+                        limit: 25000
+                    }
+                }
             },
             {
                 test: /\.(png)$/,
@@ -53,15 +55,15 @@ module.exports = {
                     loader: "file-loader",
                     options: {
                         name: "[path][name].[hash].[ext]",
-                    },
-                },
+                    }
+                }
             },
             {
                 test: /\.css$/,
                 use: [
                     isDevelopmentMode ? 'style-loader' : MiniCssExtractPlugin.loader,
                     "css-loader"
-                ],
+                ]
             },
             {
                 test: /\.js$/,
@@ -78,13 +80,13 @@ module.exports = {
     plugins: [
         // generate a html file after every time webpack end
         new HtmlWebpackPlugin({
-            title: "Webpack demo",
+            title: "Webpack demo"
         }),
         // put all the css files in one css file and not in the js files because js files can take time until they load so mean while the css are not loaded.
         // in this way, the browser can manage the process by him self because css and js are in different files.
         // it's currently not emitting css files - bug in their plugin.
         new MiniCssExtractPlugin({
-            filename: "[chunkhash].css",
+            filename: "[chunkhash].css"
         }),
         // remove the dist folder before every webpack build.
         new CleanWebpackPlugin([path.join(__dirname, "dist")]),
@@ -97,7 +99,7 @@ module.exports = {
             cssProcessor: cssnano,
             cssProcessorOptions: {
                 discardComments: {
-                    removeAll: true,
+                    removeAll: true
                 },
                 // Run cssnano in safe mode to avoid
                 // potentially unsafe transformations.
@@ -105,20 +107,24 @@ module.exports = {
             },
             canPrint: false
         }),
-        // generate a visualize analyzer of the output bundles using a server.
+        // generate a visualize analyzer of the output bundles using a server to see dependencies sizes.
         new BundleAnalyzerPlugin({
             analyzerPort: 8887
         }),
-        new webpack.HotModuleReplacementPlugin()
+        // generate a visualize analyzer of the output bundles using a server to see loading speed in different internet speed.
+        new Jarvis({
+            port: 1337 // optional: set a port
+        })
+        // new webpack.HotModuleReplacementPlugin()
     ],
     // the dev server doesn't save any files in FS. he use in-memory FS because it is faster. so I won't find any actual bundled files in my actual FS.
     devServer: {
-        hot: true,
+        // hot: true,
         overlay: true, // capturing compilation related warnings and errors and show them instead of showing my actual website.
         stats: "errors-only",
         host: process.env.HOST,
         port: process.env.PORT,
-        open: true, // Open the page in browser
+        open: true // Open the page in browser
     },
     // control the bundle size.
     // it minimize using UglifyWebpackPlugin plugin by default.

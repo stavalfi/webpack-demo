@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=development webpack-dev-server",
-    "build": "cross-env NODE_ENV=development webpack",
+    "build": "cross-env NODE_ENV=deployment webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -33,7 +33,8 @@
     "webpack": "^4.16.5",
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.5"
+    "webpack-dev-server": "^3.1.5",
+    "webpack-jarvis": "^0.3.2"
   },
   "dependencies": {
     "@babel/polyfill": "^7.0.0-rc.3",
