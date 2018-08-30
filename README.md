@@ -2,7 +2,7 @@ Webpack Playground Repository
 ---
 
 * Webpack `4.X.X` - Optimizations, loaders and plugins
-* Babel - babel `7.X.X`, babel-loader `8.X.X`
+* Babel `7.X.X` and babel-loader `8.X.X`
 * npm
 * Hot Module Replacement (`HMR`)
 * Webpack visual analyzers: Jarvis and BundleAnalyzerPlugin
