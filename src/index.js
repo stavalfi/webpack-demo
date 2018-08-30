@@ -1,11 +1,14 @@
-import component from "./component";
+import Welcome from "./components/Welcome";
 import "./main.css";
+import { render } from 'react-dom';
+const React = require("react");
+const ReactDOM = require("react-dom");
 
-document.body.appendChild(component());
+ReactDOM.render(
+    <Welcome/>,
+    document.getElementById('root')
+  );
 
-if(module.hot) {
-    module.hot.accept('./component.js',()=>{
-        document.getElementById('myButton1').remove();
-        document.body.appendChild(component());
-    });
-}
+  module.hot.accept('./components/Welcome.js', () => {
+    render(<Welcome/>, document.getElementById('root'));
+  });

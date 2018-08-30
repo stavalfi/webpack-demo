@@ -90,7 +90,8 @@ module.exports = smp.wrap({
     plugins: [
         // generate a html file after every time webpack end
         new HtmlWebpackPlugin({
-            title: "Webpack demo"
+            title: "Webpack demo",
+            template: path.join(__dirname, 'src','output-index-tamplate.html')
         }),
         // put all the css files in one css file and not in the js files because js files can take time until they load so mean while the css are not loaded.
         // in this way, the browser can manage the process by him self because css and js are in different files.
