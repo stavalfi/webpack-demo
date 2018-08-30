@@ -9,11 +9,16 @@ const cssnano = require("cssnano");
 const safeParser = require('postcss-safe-parser');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const Jarvis = require("webpack-jarvis");
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+const smp = new SpeedMeasurePlugin();
 
 const isDevelopmentMode = process.env.NODE_ENV === 'development';
 
-module.exports = {
-    //devtool: "source-map",
+// show stacktrace when Deprecation warning occurs so I can understand from which dependency it is coming from.
+// process.traceDeprecation = true
+
+module.exports = smp.wrap({
+    devtool: "source-map",
     // in production mode, the webpack does uglify and Scope Hoisting which means that all the modules are under
     // the same scope and not in different scopes. it's slow down the build but makes the code run faster.
     mode: isDevelopmentMode ? "development" : "production",
@@ -28,7 +33,7 @@ module.exports = {
         // ....................................................................
         // [name] == the name of the chunk
         // [chunkhash] == a hash code that is generated from the content (without metadata of webpack) of the chunk.
-        filename: "[contenthash].bundle.js",
+        filename: isDevelopmentMode? "[hash].bundle.js":"[contenthash].bundle.js",
         path: path.join(__dirname, "dist")
     },
     module: {
@@ -61,6 +66,11 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: [
+                    // style-loader injects all the css styles inside the js code using element.style.
+                    // is it a requirement for HMR so there won't be any refresh of the page.
+                    // in production it is a bad idea because if the css are inside some JS bundles, then the main page can't be loaded until all the css files are downloaded by the browser.
+                    // most of the time the css files are small and should load seperatly by the browser for fast first loading.
+                    // MiniCssExtractPlugin.loader extract all the css to a different bundle.
                     isDevelopmentMode ? 'style-loader' : MiniCssExtractPlugin.loader,
                     "css-loader"
                 ]
@@ -106,29 +116,27 @@ module.exports = {
                 parser: safeParser
             },
             canPrint: false
-        }),
-        // generate a visualize analyzer of the output bundles using a server to see dependencies sizes.
-        new BundleAnalyzerPlugin({
-            analyzerPort: 8887
-        }),
-        // generate a visualize analyzer of the output bundles using a server to see loading speed in different internet speed.
-        new Jarvis({
-            port: 1337 // optional: set a port
         })
-        // new webpack.HotModuleReplacementPlugin()
-    ],
+        // define plugins for specific modes
+    ].concat(
+        isDevelopmentMode ? [
+            new Jarvis({
+                port: 1337 // optional: set a port
+              }),
+            new BundleAnalyzerPlugin()
+        ] : []
+    ),
     // the dev server doesn't save any files in FS. he use in-memory FS because it is faster. so I won't find any actual bundled files in my actual FS.
-    devServer: {
-        // hot: true,
-        overlay: true, // capturing compilation related warnings and errors and show them instead of showing my actual website.
-        stats: "errors-only",
-        host: process.env.HOST,
-        port: process.env.PORT,
-        open: true // Open the page in browser
+    serve: {
+        // stats: "errors-only",
+        // Open the page in browser
+        open: true
     },
     // control the bundle size.
     // it minimize using UglifyWebpackPlugin plugin by default.
     optimization: {
+        // when running in HMR mode, it will tell in the logs which files have been changed and caused regenerating chunks.
+        namedModules: true,
         // will remove all webpack metadata from all chunks and extract them to one single chunk.
         // if not, the content of each chunk will change because of this even if we didn't change anything in the code or in the npm modules
         // .
@@ -146,16 +154,10 @@ module.exports = {
             // initial refer to the vendors I require from the entry files listed in webpack config file not async (sync).
             // all == async + sync
             // async == only async.
-            cacheGroups: {
-                vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
-                    chunks: 'all'
-                }
-            }
+            chunks: 'all'
         }
     }
-};
+});
 
 /*
 Additional notes:
