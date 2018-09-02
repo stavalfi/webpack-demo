@@ -22,7 +22,7 @@ module.exports = smp.wrap({
     // in production mode, the webpack does uglify and Scope Hoisting which means that all the modules are under
     // the same scope and not in different scopes. it's slow down the build but makes the code run faster.
     mode: isDevelopmentMode ? "development" : "production",
-    entry: path.join(__dirname, "src", "index.js"),
+    entry: path.join(__dirname, "src", "index.tsx"),
     output: {
         // default output directory: "dist" under the main folder.
         // the amount of output files depends on the webpack configurations.
@@ -30,11 +30,15 @@ module.exports = smp.wrap({
         // if you use spiting, then those files will be slitted according the strategy under "optimisation".
         // each final output file is called chunk.
         // all the output files are called bundles and chunks and also bundles contain one or more chunks.
-        // ....................................................................
+        // ...............................`.....................................
         // [name] == the name of the chunk
         // [chunkhash] == a hash code that is generated from the content (without metadata of webpack) of the chunk.
-        filename: isDevelopmentMode? "[hash].bundle.js":"[contenthash].bundle.js",
+        filename: isDevelopmentMode ? "[hash].bundle.js" : "[contenthash].bundle.js",
         path: path.join(__dirname, "dist")
+    },
+    resolve: {
+        // Add '.ts' and '.tsx' as resolvable extensions.
+        extensions: [".ts", ".tsx", ".js", ".json"]
     },
     module: {
         rules: [
@@ -75,15 +79,15 @@ module.exports = smp.wrap({
                     "css-loader"
                 ]
             },
+            // All files with a '.ts' or '.tsx' extension will be handled by 'awesome-typescript-loader'.
             {
-                test: /\.js$/,
-                exclude: /(node_modules|bower_components)/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        babelrc: true
-                    }
-                }
+                test: /\.tsx?$/,
+                loader: "awesome-typescript-loader"
+            },
+            // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
+            {
+                enforce: "pre",
+                test: /\.js$/, loader: "source-map-loader"
             }
         ]
     },
@@ -91,7 +95,7 @@ module.exports = smp.wrap({
         // generate a html file after every time webpack end
         new HtmlWebpackPlugin({
             title: "Webpack demo",
-            template: path.join(__dirname, 'src','output-index-tamplate.html')
+            template: path.join(__dirname, 'src', 'output-index-tamplate.html')
         }),
         // put all the css files in one css file and not in the js files because js files can take time until they load so mean while the css are not loaded.
         // in this way, the browser can manage the process by him self because css and js are in different files.
@@ -118,15 +122,7 @@ module.exports = smp.wrap({
             },
             canPrint: false
         })
-        // define plugins for specific modes
-    ].concat(
-        isDevelopmentMode ? [
-            new Jarvis({
-                port: 1337 // optional: set a port
-              }),
-            new BundleAnalyzerPlugin()
-        ] : []
-    ),
+    ],
     // the dev server doesn't save any files in FS. he use in-memory FS because it is faster. so I won't find any actual bundled files in my actual FS.
     serve: {
         // stats: "errors-only",
