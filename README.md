@@ -1,4 +1,4 @@
-Webpack Playground Repository
+Webpack Starter Repository
 ---
 
 * Webpack `4.X.X` - Optimizations, loaders and plugins
