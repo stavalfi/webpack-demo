@@ -235,6 +235,8 @@ function BFS(graph, startNodeIndex) {
     }
 }
 
+const compose = (...functions) => functions.reduceRight((composedFunction, currentFunction) =>
+    (...params) => currentFunction(composedFunction(...params)));
 
 export default class Welcome extends React.Component {
 
@@ -263,26 +265,136 @@ export default class Welcome extends React.Component {
         return has_recursion(object, keys, 0);
     }
 
-    render() {
-        const compose = (...functions) => functions.reduceRight((composedFunction, currentFunction) =>
-            (...params) => currentFunction(composedFunction(...params)));
-
-        const compose2 = (...functions) => (...args) => {
-            return functions.slice(0, functions.length - 1)
-                .reduceRight((params, func) => func(params), functions[functions.length - 1](...args));
+    // compose array methods but create a new array after each method invocation.
+    f1() {
+        const funcWithoutThis = (func, ...params) => function () {
+            return func.apply(this, params);
         };
 
-        const pipe = compose(arg => arg + " hello!!!", arg => arg + 4, arg => arg + 3, arg => arg + 1);
-        console.log(pipe(0));
+        const composeChainedMethods =
+            (...funcsWithoutThis) =>
+                initialThis =>
+                    funcsWithoutThis.reduceRight(
+                        (currentThis, funcWithoutThis) => funcWithoutThis.apply(currentThis),
+                        initialThis
+                    );
+
+        const result = composeChainedMethods(
+            funcWithoutThis(Array.prototype.reduce, (result, element) => result + element),
+            funcWithoutThis(Array.prototype.map, element => element + 1),
+            funcWithoutThis(Array.prototype.map, element => element * 10)
+        )([1, 2, 3]);
+    }
+
+    // compose array methods but create a new array after each method invocation.
+    f2() {
+        const reduce = biFunc => initialValue => function () {
+            return Array.prototype.reduce.call(this, biFunc, initialValue);
+        };
+        const map = func => function () {
+            return Array.prototype.map.call(this, func);
+        };
+        const filter = predicate => function () {
+            return Array.prototype.filter.call(this, predicate);
+        };
+
+        const compose = (...funcsWithoutThis) =>
+            initialThis =>
+                funcsWithoutThis.reduceRight(
+                    (currentThis, funcWithoutThis) => funcWithoutThis.apply(currentThis),
+                    initialThis
+                );
+
+        const add = (number1, number2) => number1 + number2;
+        const multiplyByTen = element => element * 10;
+        const isLessThanTwo = element => element < 2;
+
+        const result = compose(
+            reduce(add)(0),
+            map(multiplyByTen),
+            filter(isLessThanTwo)
+        )([1, 2, 3]);
+    }
+
+    // Transducers:
+    // compose array methods WITHOUT creating a new array after each method invocation.
+    f3() {
+
+    }
+
+    render() {
+
+        // general note on operators: only the last function maybe will add the element
+        // to the result-array: arrayUntilNow so it means that all the operators before
+        // won't thought that parameter.
+        const tap = consumer => reducing => (arrayUntilNow, currentElement) => {
+            consumer(currentElement);
+            return reducing(arrayUntilNow, currentElement);
+        };
+
+        const map = mapper => reducing => (arrayUntilNow, currentElement) =>
+            reducing(arrayUntilNow, mapper(currentElement));
+
+        const filter = predicate => reducing => (arrayUntilNow, currentElement) =>
+            predicate(currentElement) ?
+                reducing(arrayUntilNow, currentElement) :
+                arrayUntilNow;
+
+        // const result = compose(filter,map)([1,2,3]);
+        //
+        //
+        // const result2 = [0, 1, 2, 3]
+        //     .reduce(map(x => x + 1)(
+        //         (arrayUntilNow, currentElement) => [...arrayUntilNow, currentElement]
+        //     ), [])
+        //     .reduce(filter(x => x % 2)(
+        //         (arrayUntilNow, currentElement) => [...arrayUntilNow, currentElement]
+        //     ), [])
+        //     .reduce((count, _) => count + 1, 0);
+        //
+
+        const increase = x => x + 1;
+        const isEven = x => x % 2 === 0;
+        const expandArray = (arrayUntilNow, currentElement) => [...arrayUntilNow, currentElement];
+
+        // the reduce of the map function is the actual logic of the filter function.
+        // it means that instead of expanding the array inside the map function,
+        // the map function will invoke the actual logic of the reduce function and it
+        // will expand the array if the condition is true.
+        // conclusion: the reduce of each operator will be the actual logic of the next operator.
+        //              if the source element will pass all those operators without die,
+        //              then the last operator will extend the array.
+        // note: the beauty is that if the filter function condition is false then the filter
+        //          function won't invoke it's reduce function so the next operator won't be called.
+        //          so it means that if we are iterating on array, then the next element will be
+        //          called because we done processing the current element.
+        // const result3 = map(increase)(
+        //     filter(isEven)(expandArray)
+        // )([1, 2, 3], 5);
+
+        // const result = [1, 2, 3, 4].reduce(map(increase)(filter(isEven)(expandArray)), []);
+
+
+        // due to the implementation of those functions, the first function in
+        // the array will be the reduce function of the second function and so on.
+        // so reduce here is like reduceRight in normal compose implementations.
+        // the conclusion is that we need pipe and not compose.
+        const pipe = (...funcs) =>
+            initialParam =>
+                funcs.reduce((currentParam, func) => func(currentParam), initialParam);
+
+        // const result = [1, 2, 3, 4].reduce(pipe(filter(isEven), map(increase))(expandArray), []);
+
+
+        const transduce = (...funcs) => elements => elements.reduce(pipe(...funcs)(expandArray), []);
+
+        const result = transduce(filter(isEven), map(increase))([1, 2, 3, 4]);
+
+        console.log(result);
 
         return <div>
             {
-                this.intersection([1, 4], [1, 4], [4, 1, 2])
-                    .map((element, index) => (
-                        <div key={index}>
-                            {element}
-                            <br/>
-                        </div>))
+                result
             }
         </div>;
     }
