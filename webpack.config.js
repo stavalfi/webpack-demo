@@ -121,10 +121,10 @@ module.exports = smp.wrap({
         // define plugins for specific modes
     ].concat(
         isDevelopmentMode ? [
-            new Jarvis({
-                port: 1337 // optional: set a port
-              }),
-            new BundleAnalyzerPlugin()
+            // new Jarvis({
+            //     port: 1337 // optional: set a port
+            //   }),
+            // new BundleAnalyzerPlugin()
         ] : []
     ),
     // the dev server doesn't save any files in FS. he use in-memory FS because it is faster. so I won't find any actual bundled files in my actual FS.
